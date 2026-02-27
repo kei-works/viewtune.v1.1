@@ -9,8 +9,11 @@
 body { margin: 0; background: #000; color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; touch-action: none; position: fixed; width: 100%; height: 100%; }
 #auth-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .auth-box { text-align: center; width: 220px; }
+
+/* 🔐 入力欄とボタンの幅を220pxで統一（隙間なし） */
 .auth-box input { width: 220px; padding: 12px 0; border: 1px solid #444; background: #111; color: #fff; border-radius: 8px; text-align: center; font-size: 16px; outline: none; margin-bottom: 15px; letter-spacing: 2px; box-sizing: border-box; }
 .auth-box button { width: 220px; padding: 12px 0; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; letter-spacing: 1px; box-sizing: border-box; }
+
 .auth-err { color: #ff3b30; font-size: 11px; margin-top: 10px; visibility: hidden; }
 #splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s; pointer-events: none; opacity: 1; display: none; }
 .splash-logo { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 100; letter-spacing: 10px; animation: pulse 2s infinite; }
@@ -55,4 +58,20 @@ aside { width: 150px; min-width: 150px; background: #111; border-right: 1px soli
     <label for="f-p" class="file-select-btn">PDF選択</label>
     <input type="file" id="f-p" accept="application/pdf" style="display:none">
     <div id="pdf-name" class="info-label">PDF未選択</div>
-    <div class="btn-row"><button id="b-p" class="round-btn">←</button><div id="page-num">0 / 0</div><button id="n
+    <div class="btn-row"><button id="b-p" class="round-btn">←</button><div id="page-num">0 / 0</div><button id="n-pg" class="round-btn">→</button></div>
+    <div class="mode-switch"><button id="m-fix" class="mode-btn active">FIX</button><button id="m-free" class="mode-btn">FREE</button></div>
+    <div class="sep"></div>
+    <label for="f-a" class="file-select-btn">曲選択</label>
+    <input type="file" id="f-a" accept="audio/*" style="display:none">
+    <div id="audio-name" class="info-label">曲未選択</div>
+    <div class="audio-row"><button id="p-b" class="round-btn">▶</button><div id="time-text">0:00/0:00</div></div>
+    <div class="sep"></div>
+    <div class="c-text">©Kei.works</div>
+  </aside>
+  <main id="pdf-container"><canvas id="pdf-canvas"></canvas></main>
+</div>
+
+<script>
+(function(){
+  const pwIn = document.getElementById('pw-input'), pwBtn = document.getElementById('pw-btn'), pwErr = document.getElementById('pw-err'), authOverlay = document.getElementById('auth-overlay');
+  const K = "YWxwaWNv"; // "alpico" を
