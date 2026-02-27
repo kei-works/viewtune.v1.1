@@ -1,81 +1,186 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ViewTune v2</title>
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Kei.works ViewTune v1.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
-body{margin:0;background:#000;color:#fff;font-family:-apple-system,sans-serif;overflow:hidden}
+/* スタイルはv1.6を継承し、認証画面をよりプロっぽく調整 */
+body { margin: 0; background: #000; color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; touch-action: none; position: fixed; width: 100%; height: 100%; }
+#auth-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.auth-box { text-align: center; width: 220px; }
+.auth-box input { width: 100%; padding: 12px; border: 1px solid #444; background: #111; color: #fff; border-radius: 8px; text-align: center; font-size: 16px; outline: none; margin-bottom: 15px; }
+.auth-box button { width: 100%; padding: 10px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+.auth-err { color: #ff3b30; font-size: 11px; margin-top: 10px; visibility: hidden; }
 
-/* --- 上部操作バー --- */
-#zoom-bar{position:fixed;top:0;width:100%;height:70px;background:#333;display:flex;align-items:center;padding:0 15px;gap:10px;z-index:100;box-sizing:border-box}
-.file-select-btn{cursor:pointer;background:#ddd;color:#000;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:bold;border:none}
-.zoom-btn{width:40px;height:40px;border-radius:50%;border:none;background:#ddd;color:#000;font-size:18px;flex-shrink:0}
-#page-num{font-size:12px;min-width:50px;text-align:center}
+#splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s; pointer-events: none; opacity: 1; display: none; }
+.splash-logo { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 100; letter-spacing: 10px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
 
-/* スライダーとファイル名のセット */
-.control-set{display:flex;flex-direction:column;flex-grow:1;max-width:200px;gap:2px}
-.file-label{font-size:10px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:14px}
-#z-s{width:100%;height:30px}
-
-/* --- PDF表示エリア --- */
-#pdf-container{position:absolute;top:70px;bottom:90px;width:100%;overflow:auto;background:#111;text-align:left;-webkit-overflow-scrolling:touch}
-#pdf-canvas{display:block;margin:0}
-
-/* --- 下部再生バー --- */
-#bottom-bar{position:fixed;bottom:0;width:100%;height:90px;background:#222;display:flex;align-items:center;padding:0 15px;box-sizing:border-box;border-top:1px solid #444;z-index:100}
-#clock{font-size:36px;font-weight:700;min-width:100px;margin-right:15px;font-variant-numeric:tabular-nums}
-#player{display:flex;align-items:center;gap:10px;flex:1;overflow:hidden}
-.round-btn{width:40px;height:40px;border-radius:50%;background:#ddd;border:none;font-size:18px;color:#000;flex-shrink:0}
-#s-b{width:100%;height:30px}
-
-/* --- クレジットエリア --- */
-#credit {
-  margin-left: auto;
-  padding-left: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-}
-.c-text {
-  font-size: 11px;
-  font-weight: 600;
-  color: #555; 
-  letter-spacing: 0.5px;
-  font-family: 'Verdana', sans-serif;
-}
+.main-wrapper { display: flex; width: 100vw; height: 100vh; display: none; } 
+aside { width: 150px; min-width: 150px; background: #111; border-right: 1px solid #333; display: flex; flex-direction: column; align-items: center; padding: 15px 10px; box-sizing: border-box; overflow-y: auto; z-index: 100; }
+.sep { width: 100%; border-bottom: 1px solid #555; margin: 12px 0; }
+#clock-cvs { width: 120px; height: 120px; }
+#digital-clock { font-size: 1.6rem; margin: 5px 0; font-variant-numeric: tabular-nums; }
+.round-btn { width: 30px; height: 30px; border-radius: 50%; background: #ddd; color: #000; border: none; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.btn-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin: 8px 0; }
+.file-select-btn { cursor: pointer; background: #ddd; color: #000; padding: 7px 0; width: 100%; border-radius: 6px; font-size: 11px; font-weight: 700; text-align: center; margin-bottom: 5px; display: block; }
+.info-label { font-size: 9px; color: #888; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#page-num { font-size: 10px; color: #777; min-width: 45px; text-align: center; }
+.mode-switch { width: 100%; display: flex; background: #333; border-radius: 15px; margin-top: 5px; padding: 2px; }
+.mode-btn { flex: 1; border: none; background: none; color: #888; font-size: 10px; font-weight: 700; padding: 5px 0; border-radius: 13px; }
+.mode-btn.active { background: #fff; color: #000; }
+#pdf-container { flex: 1; overflow: hidden; background: #111; position: relative; }
+#pdf-canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.audio-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 5px; }
+#time-text { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.c-text { font-size: 9px; color: #444; margin-top: auto; padding-top: 15px; }
 </style>
 </head>
 <body>
 
-<div id="zoom-bar">
-  <label for="f-p" class="file-select-btn">PDF選択</label>
-  <input type="file" id="f-p" accept="application/pdf" style="display:none">
-  <button id="b-p" class="zoom-btn">←</button>
-  <button id="n-pg" class="zoom-btn">→</button>
-  <span id="page-num">0/0</span>
-  
-  <div class="control-set">
-    <div id="pdf-name" class="file-label">PDF未選択</div>
-    <input type="range" id="z-s" min="50" max="300" value="100">
+<div id="auth-overlay">
+  <div class="splash-logo" style="margin-bottom: 30px; letter-spacing: 5px;">ViewTune PRO</div>
+  <div class="auth-box">
+    <input type="password" id="pw-input" placeholder="Enter License Key">
+    <button id="pw-btn">ACTIVATE</button>
+    <div id="pw-err" class="auth-err">Invalid or Expired Key</div>
   </div>
 </div>
 
-<div id="pdf-container"><canvas id="pdf-canvas"></canvas></div>
+<div id="splash"><div class="splash-logo">Kei.works</div></div>
 
-<div id="bottom-bar">
-  <div id="clock">00:00</div>
-  <div id="player">
+<div class="main-wrapper" id="main-content">
+  <aside>
+    <canvas id="clock-cvs"></canvas>
+    <div id="digital-clock">00:00:00</div>
+    <div class="sep"></div>
+    <label for="f-p" class="file-select-btn">PDF選択</label>
+    <input type="file" id="f-p" accept="application/pdf" style="display:none">
+    <div id="pdf-name" class="info-label">PDF未選択</div>
+    <div class="btn-row"><button id="b-p" class="round-btn">←</button><div id="page-num">0 / 0</div><button id="n-pg" class="round-btn">→</button></div>
+    <div class="mode-switch"><button id="m-fix" class="mode-btn active">FIX</button><button id="m-free" class="mode-btn">FREE</button></div>
+    <div class="sep"></div>
     <label for="f-a" class="file-select-btn">曲選択</label>
     <input type="file" id="f-a" accept="audio/*" style="display:none">
-    <button id="p-b" class="round-btn">▶</button>
-    
-    <div class="control-set">
-      <div id="audio-name" class="file-label">曲未選択</div>
-      <input type="range" id="s-b" min="0" max="100" value="0">
-    </div>
-  </div>
+    <div id="audio-name" class="info-label">曲未選択</div>
+    <div class="audio-row"><button id="p-b" class="round-btn">▶</button><div id="time-text">0:00/0:00</div></div>
+    <div class="sep"></div>
+    <div class="c-text">©Kei.works</div>
+  </aside>
+  <main id="pdf-container"><canvas id="pdf-canvas"></canvas></main>
+</div>
 
-  <div id="credit">
-    <span class="c-text">©Kei.works</span>
+<script>
+(async function(){
+  // --- 🔐 複数ライセンスキー管理 ---
+  // 今後、新しいパスワードを追加する場合はこのリストにハッシュ値を追記します
+  const AUTHORIZED_HASHES = [
+    "c5e9668352b2bc820f4c979d45e41df74c399b1a51057f88a9e701a2d539525b" // 'alpico' のハッシュ値
+  ];
+
+  async function sha256(str) {
+    const buf = new TextEncoder().encode(str);
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  const pwIn = document.getElementById('pw-input'), pwBtn = document.getElementById('pw-btn'), pwErr = document.getElementById('pw-err'), authOverlay = document.getElementById('auth-overlay');
+
+  async function checkAuth() {
+    const hashedInput = await sha256(pwIn.value);
+    // 入力されたパスワードのハッシュが、許可リストのいずれかと一致するか確認
+    if (AUTHORIZED_HASHES.includes(hashedInput)) {
+      authOverlay.style.display = 'none';
+      initApp();
+    } else {
+      pwErr.style.visibility = 'visible';
+      pwIn.value = '';
+    }
+  }
+
+  pwBtn.onclick = checkAuth;
+  pwIn.onkeypress = (e) => { if(e.key==='Enter') checkAuth(); };
+
+  function initApp() {
+    const splash = document.getElementById('splash'), main = document.getElementById('main-content');
+    splash.style.display = 'flex'; main.style.display = 'flex';
+    setTimeout(() => { splash.style.opacity = '0'; main.style.visibility = 'visible'; setTimeout(() => splash.style.display = 'none', 1000); }, 1500);
+
+    // --- 以降、アプリロジック ---
+    updateClock(); setInterval(updateClock, 1000);
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    
+    let doc=null, pn=1, sc=1.0, rent=false, isFreeMode=false;
+    const cvs=document.getElementById('pdf-canvas'), ctx=cvs.getContext('2d'), container=document.getElementById('pdf-container');
+    
+    async function render(){
+      if(!doc || rent) return; rent=true;
+      try {
+        const pg=await doc.getPage(pn); const dpr=window.devicePixelRatio||1;
+        const vp=pg.getViewport({scale:sc*dpr});
+        cvs.width=vp.width; cvs.height=vp.height;
+        cvs.style.width=(vp.width/dpr)+'px'; cvs.style.height=(vp.height/dpr)+'px';
+        cvs.style.transform = `scale(1)`;
+        await pg.render({canvasContext:ctx, viewport:vp}).promise;
+      } catch(e){}
+      rent=false; document.getElementById('page-num').textContent=pn+" / "+doc.numPages;
+    }
+
+    document.getElementById('f-p').onchange=(e)=>{
+      const f=e.target.files[0]; if(!f) return;
+      document.getElementById('pdf-name').textContent=f.name;
+      const r=new FileReader(); r.onload=async function(){ doc=await pdfjsLib.getDocument({data:new Uint8Array(this.result)}).promise; pn=1; render(); };
+      r.readAsArrayBuffer(f);
+    };
+
+    document.getElementById('m-fix').onclick = () => { isFreeMode=false; updateModeBtns(); container.style.overflow='hidden'; container.scrollLeft=0; container.scrollTop=0; };
+    document.getElementById('m-free').onclick = () => { isFreeMode=true; updateModeBtns(); container.style.overflow='auto'; };
+    function updateModeBtns(){ document.getElementById('m-fix').classList.toggle('active', !isFreeMode); document.getElementById('m-free').classList.toggle('active', isFreeMode); }
+
+    let initialDist = null, initialScale = 1, isMoving = false, lastX, lastY, tempNewScale = 1.0;
+    container.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) { initialDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initialScale = sc; }
+      else if (e.touches.length === 1 && isFreeMode) { isMoving = true; lastX = e.touches[0].pageX; lastY = e.touches[0].pageY; }
+    }, { passive: false });
+    container.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2 && initialDist !== null) {
+        e.preventDefault(); const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        tempNewScale = Math.min(Math.max(initialScale * (dist / initialDist), 0.5), 4.0);
+        cvs.style.transform = `scale(${tempNewScale / sc})`;
+      } else if (e.touches.length === 1 && isMoving && isFreeMode) {
+        container.scrollLeft += (lastX - e.touches[0].pageX); container.scrollTop += (lastY - e.touches[0].pageY);
+        lastX = e.touches[0].pageX; lastY = e.touches[0].pageY;
+      }
+    }, { passive: false });
+    container.addEventListener('touchend', (e) => { if (initialDist !== null && e.touches.length < 2) { sc = tempNewScale; initialDist = null; render(); } isMoving = false; });
+
+    document.getElementById('b-p').onclick=()=>{if(doc&&pn>1){pn--;render()}};
+    document.getElementById('n-pg').onclick=()=>{if(doc&&pn<doc.numPages){pn++;render()}};
+
+    const au=new Audio(), pb=document.getElementById('p-b'), fa=document.getElementById('f-a'), timeDisplay = document.getElementById('time-text');
+    fa.onchange=(e)=>{ if(e.target.files[0]) { au.src=URL.createObjectURL(e.target.files[0]); document.getElementById('audio-name').textContent=e.target.files[0].name; } };
+    pb.onclick=()=>{ if(au.src){ if(au.paused){ au.play(); pb.textContent="||"; } else { au.pause(); pb.textContent="▶"; } } };
+    au.ontimeupdate=()=>{
+      const fmt = (t) => { if(!t || isNaN(t)) return "0:00"; const m=Math.floor(t/60), s=Math.floor(t%60); return m + ":" + s.toString().padStart(2,'0'); };
+      timeDisplay.textContent = fmt(au.currentTime) + "/" + fmt(au.duration);
+    };
+  }
+
+  function updateClock(){
+    const d=new Date(); document.getElementById('digital-clock').textContent=d.toTimeString().split(' ')[0];
+    const canvas=document.getElementById('clock-cvs'), ctx=canvas.getContext('2d');
+    canvas.width=240; canvas.height=240; ctx.translate(120,120);
+    ctx.beginPath(); ctx.arc(0,0,110,0,Math.PI*2); ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='bold 18px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(let i=1; i<=12; i++){ const a=(i*30-90)*(Math.PI/180); ctx.fillText(i, Math.cos(a)*88, Math.sin(a)*88); }
+    const h=(d.getHours()%12+d.getMinutes()/60)*30, m=(d.getMinutes()+d.getSeconds()/60)*6, s=d.getSeconds()*6;
+    drawHand(ctx,h,60,6,'#fff'); drawHand(ctx,m,85,4,'#fff'); drawHand(ctx,s,95,2,'#ff3b30');
+  }
+  function drawHand(ctx,deg,len,w,col){ ctx.save(); ctx.rotate(deg*Math.PI/180); ctx.beginPath(); ctx.moveTo(0,10); ctx.lineTo(0,-len); ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineCap='round'; ctx.stroke(); ctx.restore(); }
+})();
+</script>
+</body>
+</html>
