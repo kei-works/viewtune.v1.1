@@ -2,45 +2,34 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>ViewTune v1.1 FIX</title>
+<title>Kei.works ViewTune v1.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
-body { margin: 0; background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-#auth { text-align: center; width: 220px; }
-input { width: 100%; padding: 12px; border: 1px solid #444; background: #111; color: #fff; border-radius: 8px; text-align: center; margin-bottom: 15px; box-sizing: border-box; }
-button { width: 100%; padding: 12px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-#err { color: #ff3b30; font-size: 12px; margin-top: 10px; display: none; }
-#main { display: none; padding: 20px; text-align: center; }
-</style>
-</head>
-<body>
-
-<div id="auth">
-  <div style="margin-bottom:20px; letter-spacing:5px;">ViewTune</div>
-  <input type="password" id="pw" placeholder="alpico と打ってください">
-  <button onclick="go()">UNLOCK</button>
-  <div id="err">パスワードが違います</div>
-</div>
-
-<div id="main">
-  <h1>認証成功</h1>
-  <p>これが見えたら、システムは正常です。</p>
-  <button onclick="location.reload()">再試行テスト</button>
-</div>
-
-<script>
-function go() {
-  const val = document.getElementById('pw').value.trim().toLowerCase();
-  // 徹底的にシンプルにしました。これで入れないことは物理的にあり得ません。
-  if (val === "alpico") {
-    document.getElementById('auth').style.display = 'none';
-    document.body.style.background = '#111';
-    alert("認証に成功しました！アプリを起動します。");
-    // ここにアプリの全機能を流し込みますが、まずはこの「成功画面」が出るか確認してください
-    document.getElementById('main').style.display = 'block';
-  } else {
-    document.getElementById('err').style.display = 'block';
-  }
-}
-</script>
-</body>
-</html>
+body { margin: 0; background: #000; color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; touch-action: none; position: fixed; width: 100%; height: 100%; }
+#auth-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.auth-box { text-align: center; width: 220px; }
+.auth-box input { width: 220px; padding: 12px 0; border: 1px solid #444; background: #111; color: #fff; border-radius: 8px; text-align: center; font-size: 16px; outline: none; margin-bottom: 15px; letter-spacing: 2px; box-sizing: border-box; }
+.auth-box button { width: 220px; padding: 12px 0; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; letter-spacing: 1px; box-sizing: border-box; }
+.auth-err { color: #ff3b30; font-size: 11px; margin-top: 10px; visibility: hidden; }
+#splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s; pointer-events: none; opacity: 1; display: none; }
+.splash-logo { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 100; letter-spacing: 10px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+.main-wrapper { display: flex; width: 100vw; height: 100vh; display: none; } 
+aside { width: 150px; min-width: 150px; background: #111; border-right: 1px solid #333; display: flex; flex-direction: column; align-items: center; padding: 15px 10px; box-sizing: border-box; overflow-y: auto; z-index: 100; }
+.sep { width: 100%; border-bottom: 1px solid #555; margin: 12px 0; }
+#clock-cvs { width: 120px; height: 120px; }
+#digital-clock { font-size: 1.6rem; margin: 5px 0; font-variant-numeric: tabular-nums; }
+.round-btn { width: 30px; height: 30px; border-radius: 50%; background: #ddd; color: #000; border: none; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.btn-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin: 8px 0; }
+.file-select-btn { cursor: pointer; background: #ddd; color: #000; padding: 7px 0; width: 100%; border-radius: 6px; font-size: 11px; font-weight: 700; text-align: center; margin-bottom: 5px; display: block; }
+.info-label { font-size: 9px; color: #888; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#page-num { font-size: 10px; color: #777; min-width: 45px; text-align: center; }
+.mode-switch { width: 100%; display: flex; background: #333; border-radius: 15px; margin-top: 5px; padding: 2px; }
+.mode-btn { flex: 1; border: none; background: none; color: #888; font-size: 10px; font-weight: 700; padding: 5px 0; border-radius: 13px; }
+.mode-btn.active { background: #fff; color: #000; }
+#pdf-container { flex: 1; overflow: hidden; background: #111; position: relative; }
+#pdf-canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.audio-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 5px; }
+#time-text { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.c-text { font-size: 9px; color: #444; margin-top: auto; padding-
