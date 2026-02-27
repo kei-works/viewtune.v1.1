@@ -7,42 +7,58 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
 body { margin: 0; background: #000; color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; touch-action: none; position: fixed; width: 100%; height: 100%; }
-
-/* 🔐 認証画面のデザイン調整 */
 #auth-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-.auth-box { text-align: center; width: 220px; } /* ボックス全体の幅 */
+.auth-box { text-align: center; width: 220px; }
 
-.auth-box input { 
-  width: 100%; /* 親要素(220px)いっぱいに広げる */
-  padding: 12px 0; 
-  border: 1px solid #444; 
-  background: #111; 
-  color: #fff; 
-  border-radius: 8px; 
-  text-align: center; 
-  font-size: 16px; 
-  outline: none; 
-  margin-bottom: 15px; 
-  letter-spacing: 2px; 
-  box-sizing: border-box; /* パディングを含めた幅計算 */
-}
-
-.auth-box button { 
-  width: 100%; /* 入力欄と同じ幅に */
-  padding: 12px 0; 
-  background: #fff; 
-  color: #000; 
-  border: none; 
-  border-radius: 8px; 
-  font-weight: bold; 
-  cursor: pointer; 
-  letter-spacing: 1px; 
-  box-sizing: border-box;
-}
+/* 入力欄とボタンの幅を220pxで統一 */
+.auth-box input { width: 220px; padding: 12px 0; border: 1px solid #444; background: #111; color: #fff; border-radius: 8px; text-align: center; font-size: 16px; outline: none; margin-bottom: 15px; letter-spacing: 2px; box-sizing: border-box; }
+.auth-box button { width: 220px; padding: 12px 0; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; letter-spacing: 1px; box-sizing: border-box; }
 
 .auth-err { color: #ff3b30; font-size: 11px; margin-top: 10px; visibility: hidden; }
-
-/* --- 以前のスタイルを継承 --- */
 #splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s; pointer-events: none; opacity: 1; display: none; }
 .splash-logo { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 100; letter-spacing: 10px; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,
+@keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+.main-wrapper { display: flex; width: 100vw; height: 100vh; display: none; } 
+aside { width: 150px; min-width: 150px; background: #111; border-right: 1px solid #333; display: flex; flex-direction: column; align-items: center; padding: 15px 10px; box-sizing: border-box; overflow-y: auto; z-index: 100; }
+.sep { width: 100%; border-bottom: 1px solid #555; margin: 12px 0; }
+#clock-cvs { width: 120px; height: 120px; }
+#digital-clock { font-size: 1.6rem; margin: 5px 0; font-variant-numeric: tabular-nums; }
+.round-btn { width: 30px; height: 30px; border-radius: 50%; background: #ddd; color: #000; border: none; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.btn-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin: 8px 0; }
+.file-select-btn { cursor: pointer; background: #ddd; color: #000; padding: 7px 0; width: 100%; border-radius: 6px; font-size: 11px; font-weight: 700; text-align: center; margin-bottom: 5px; display: block; }
+.info-label { font-size: 9px; color: #888; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#page-num { font-size: 10px; color: #777; min-width: 45px; text-align: center; }
+.mode-switch { width: 100%; display: flex; background: #333; border-radius: 15px; margin-top: 5px; padding: 2px; }
+.mode-btn { flex: 1; border: none; background: none; color: #888; font-size: 10px; font-weight: 700; padding: 5px 0; border-radius: 13px; }
+.mode-btn.active { background: #fff; color: #000; }
+#pdf-container { flex: 1; overflow: hidden; background: #111; position: relative; }
+#pdf-canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.audio-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 5px; }
+#time-text { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.c-text { font-size: 9px; color: #444; margin-top: auto; padding-top: 15px; }
+</style>
+</head>
+<body>
+
+<div id="auth-overlay">
+  <div class="splash-logo" style="margin-bottom: 30px; letter-spacing: 5px;">ViewTune</div>
+  <div class="auth-box">
+    <input type="password" id="pw-input" placeholder="PASSCODE">
+    <button id="pw-btn">UNLOCK</button>
+    <div id="pw-err" class="auth-err">Invalid Passcode</div>
+  </div>
+</div>
+
+<div id="splash"><div class="splash-logo">Kei.works</div></div>
+<div class="main-wrapper" id="main-content">
+  <aside>
+    <canvas id="clock-cvs"></canvas>
+    <div id="digital-clock">00:00:00</div>
+    <div class="sep"></div>
+    <label for="f-p" class="file-select-btn">PDF選択</label>
+    <input type="file" id="f-p" accept="application/pdf" style="display:none">
+    <div id="pdf-name" class="info-label">PDF未選択</div>
+    <div class="btn-row"><button id="b-p" class="round-btn">←</button><div id="page-num">0 / 0</div><button id="n-pg" class="round-btn">→</button></div>
+    <div class="mode-switch"><button id="m-fix" class="mode-btn active">FIX</button><button id="m-free" class="mode-btn">FREE</button></div>
+    <div class="sep"></div>
+    <label for="f-a" class="file-select-btn">曲選択</
