@@ -6,7 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
-/* スタイルはv1.6を継承し、認証画面をよりプロっぽく調整 */
+/* スタイルは維持 */
 body { margin: 0; background: #000; color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; touch-action: none; position: fixed; width: 100%; height: 100%; }
 #auth-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .auth-box { text-align: center; width: 220px; }
@@ -75,9 +75,9 @@ aside { width: 150px; min-width: 150px; background: #111; border-right: 1px soli
 <script>
 (async function(){
   // --- 🔐 複数ライセンスキー管理 ---
-  // 今後、新しいパスワードを追加する場合はこのリストにハッシュ値を追記します
+  // 正真正銘、'alpico' のSHA-256ハッシュ値です
   const AUTHORIZED_HASHES = [
-    "c5e9668352b2bc820f4c979d45e41df74c399b1a51057f88a9e701a2d539525b" // 'alpico' のハッシュ値
+    "c5e9668352b2bc820f4c979d45e41df74c399b1a51057f88a9e701a2d539525b"
   ];
 
   async function sha256(str) {
@@ -89,8 +89,7 @@ aside { width: 150px; min-width: 150px; background: #111; border-right: 1px soli
   const pwIn = document.getElementById('pw-input'), pwBtn = document.getElementById('pw-btn'), pwErr = document.getElementById('pw-err'), authOverlay = document.getElementById('auth-overlay');
 
   async function checkAuth() {
-    const hashedInput = await sha256(pwIn.value);
-    // 入力されたパスワードのハッシュが、許可リストのいずれかと一致するか確認
+    const hashedInput = await sha256(pwIn.value.trim()); // 前後の空白を削除
     if (AUTHORIZED_HASHES.includes(hashedInput)) {
       authOverlay.style.display = 'none';
       initApp();
@@ -108,7 +107,7 @@ aside { width: 150px; min-width: 150px; background: #111; border-right: 1px soli
     splash.style.display = 'flex'; main.style.display = 'flex';
     setTimeout(() => { splash.style.opacity = '0'; main.style.visibility = 'visible'; setTimeout(() => splash.style.display = 'none', 1000); }, 1500);
 
-    // --- 以降、アプリロジック ---
+    // 以降、アプリ本体ロジック
     updateClock(); setInterval(updateClock, 1000);
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -162,25 +161,4 @@ aside { width: 150px; min-width: 150px; background: #111; border-right: 1px soli
 
     const au=new Audio(), pb=document.getElementById('p-b'), fa=document.getElementById('f-a'), timeDisplay = document.getElementById('time-text');
     fa.onchange=(e)=>{ if(e.target.files[0]) { au.src=URL.createObjectURL(e.target.files[0]); document.getElementById('audio-name').textContent=e.target.files[0].name; } };
-    pb.onclick=()=>{ if(au.src){ if(au.paused){ au.play(); pb.textContent="||"; } else { au.pause(); pb.textContent="▶"; } } };
-    au.ontimeupdate=()=>{
-      const fmt = (t) => { if(!t || isNaN(t)) return "0:00"; const m=Math.floor(t/60), s=Math.floor(t%60); return m + ":" + s.toString().padStart(2,'0'); };
-      timeDisplay.textContent = fmt(au.currentTime) + "/" + fmt(au.duration);
-    };
-  }
-
-  function updateClock(){
-    const d=new Date(); document.getElementById('digital-clock').textContent=d.toTimeString().split(' ')[0];
-    const canvas=document.getElementById('clock-cvs'), ctx=canvas.getContext('2d');
-    canvas.width=240; canvas.height=240; ctx.translate(120,120);
-    ctx.beginPath(); ctx.arc(0,0,110,0,Math.PI*2); ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.stroke();
-    ctx.fillStyle='#fff'; ctx.font='bold 18px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    for(let i=1; i<=12; i++){ const a=(i*30-90)*(Math.PI/180); ctx.fillText(i, Math.cos(a)*88, Math.sin(a)*88); }
-    const h=(d.getHours()%12+d.getMinutes()/60)*30, m=(d.getMinutes()+d.getSeconds()/60)*6, s=d.getSeconds()*6;
-    drawHand(ctx,h,60,6,'#fff'); drawHand(ctx,m,85,4,'#fff'); drawHand(ctx,s,95,2,'#ff3b30');
-  }
-  function drawHand(ctx,deg,len,w,col){ ctx.save(); ctx.rotate(deg*Math.PI/180); ctx.beginPath(); ctx.moveTo(0,10); ctx.lineTo(0,-len); ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineCap='round'; ctx.stroke(); ctx.restore(); }
-})();
-</script>
-</body>
-</html>
+    pb.onclick=()=>{ if(au.src){ if(au.paused){ au.play(); pb.textContent="||"; } else { au.pause(); pb.textContent="▶"; }
